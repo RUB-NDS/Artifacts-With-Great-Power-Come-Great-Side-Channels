@@ -1,0 +1,372 @@
+diff --git a/Makefile b/Makefile
+index 8b83abb..ebd934c 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,9 +1,10 @@
+-all: dut_aes32 dut_aesbitsliced dut_donna dut_donnabad dut_simple
++all: dut_r-comparison
+ 
+ OBJS_AES32 = examples/aes32/rijndael-alg-fst.o
+ OBJS_DONNA = examples/donna/curve25519-donna.o
+ OBJS_DONNABAD = examples/donnabad/curve25519-donnabad.o
+ OBJS_AESBITSLICED = examples/aesbitsliced/afternm_aes128ctr.o \
++OBJS_R_COMPARISON = examples/r-comparison/r-comparison.o \
+ examples/aesbitsliced/beforenm_aes128ctr.o \
+ examples/aesbitsliced/common_aes128ctr.o \
+ examples/aesbitsliced/consts_aes128ctr.o \
+@@ -21,22 +22,8 @@ LDFLAGS = $(OPTIMIZATION) -std=c11
+ 
+ INCS	= -Isrc/
+ 
+-dut_aes32: $(OBJS_AES32) examples/aes32/dut_aes32.c
+-	$(CC) $(LDFLAGS) $(INCS) -o dudect_aes32_$(OPTIMIZATION) examples/aes32/$@.c $(OBJS_AES32) $(LIBS)
+-
+-dut_aesbitsliced: $(OBJS_AESBITSLICED) examples/aesbitsliced/dut_aesbitsliced.c
+-	$(CC) $(LDFLAGS) $(INCS) -o dudect_aesbitsliced_$(OPTIMIZATION) examples/aesbitsliced/$@.c $(OBJS_AESBITSLICED) $(LIBS)
+-
+-dut_donna: $(OBJS_DONNA) examples/donna/dut_donna.c
+-	$(CC) $(LDFLAGS) $(INCS) -o dudect_donna_$(OPTIMIZATION) examples/donna/$@.c $(OBJS_DONNA) $(LIBS)
+-
+-dut_donnabad: $(OBJS_DONNABAD) examples/donnabad/dut_donnabad.c
+-	$(CC) $(LDFLAGS) $(INCS) -o dudect_donnabad_$(OPTIMIZATION) examples/donnabad/$@.c $(OBJS_DONNABAD) $(LIBS)
+-
+-dut_simple: examples/simple/example.c
+-	# higher compiler optimization levels can make this constant time
+-	$(CC) -O0 $(INCS) -o dudect_simple_O0 examples/simple/example.c $(LIBS)
+-	$(CC) -O2 $(INCS) -DMEASUREMENTS_PER_CHUNK=100000 -o dudect_simple_O2 examples/simple/example.c $(LIBS)
++dut_r-comparison: $(OBJS_AES32) examples/r-comparison/dut_r-comparison.c
++	$(CC) $(LDFLAGS) $(INCS) -o dudect_r_comparison_$(OPTIMIZATION) examples/r-comparison/$@.c $(OBJS_AES32) $(LIBS)
+ 
+ .c.o:
+ 	$(CC) $(CFLAGS) $(INCS) -c $< -o $@
+diff --git a/examples/r-comparison/dut_r-comparison.c b/examples/r-comparison/dut_r-comparison.c
+new file mode 100644
+index 0000000..2835dd4
+--- /dev/null
++++ b/examples/r-comparison/dut_r-comparison.c
+@@ -0,0 +1,58 @@
++#include <stdlib.h>
++#include <stdint.h>
++#include <string.h> 
++
++#define DUDECT_IMPLEMENTATION
++#include "dudect.h"
++
++uint8_t do_one_computation(uint8_t *data) {
++	// not required, we performed computations before
++  return 123;
++}
++
++void prepare_inputs(dudect_config_t *c, uint8_t *input_data, uint8_t *classes) {
++  randombytes(input_data, c->number_measurements * c->chunk_size);
++  for (size_t i = 0; i < c->number_measurements; i++) {
++    classes[i] = randombit();
++    if (classes[i] == 0) {
++      memset(input_data + (size_t)i * c->chunk_size, 0x00, c->chunk_size);
++    } else {
++      // leave random
++    }
++  }
++}
++
++int main(int argc, char *argv[])
++{
++  (void)argc;
++
++  dudect_config_t config = {
++     .chunk_size = 16,
++     .number_measurements = 1e4,
++  };
++  dudect_ctx_t ctx;
++  
++  //
++  char *fileName= argv[1];
++
++  dudect_init(&ctx, &config);
++
++  /*
++  Call dudect_main() until
++   - returns something different than DUDECT_NO_LEAKAGE_EVIDENCE_YET, or
++   - you spent too much time testing and give up
++
++  Recommended that you wrap this program with timeout(2) if you don't
++  have infinite time.
++
++  For example this will run for 20 mins:
++    $ timeout 1200 ./your-executable
++  */
++  dudect_state_t state = DUDECT_NO_LEAKAGE_EVIDENCE_YET;
++  while (state == DUDECT_NO_LEAKAGE_EVIDENCE_YET) {
++    state = dudect_main(&ctx, fileName);
++  }
++  dudect_free(&ctx);
++  return (int)state;
++}
++
+diff --git a/src/dudect.h b/src/dudect.h
+index 5456659..bfdf011 100644
+--- a/src/dudect.h
++++ b/src/dudect.h
+@@ -93,6 +93,12 @@ typedef struct {
+   size_t number_measurements;
+ } dudect_config_t;
+ 
++
++typedef struct {
++  char identifier[10];
++  int64_t measurement;
++} csv_entry;
++
+ typedef struct {
+   double mean[2];
+   double m2[2];
+@@ -110,14 +116,14 @@ typedef struct {
+ } dudect_ctx_t;
+ 
+ typedef enum {
+-  DUDECT_LEAKAGE_FOUND=0,
+-  DUDECT_NO_LEAKAGE_EVIDENCE_YET
++  DUDECT_LEAKAGE_FOUND=11,
++  DUDECT_NO_LEAKAGE_EVIDENCE_YET=10
+ } dudect_state_t;
+ 
+ /* Public API */
+ 
+ DUDECT_VISIBILITY int dudect_init(dudect_ctx_t *ctx, dudect_config_t *conf);
+-DUDECT_VISIBILITY dudect_state_t dudect_main(dudect_ctx_t *c);
++DUDECT_VISIBILITY dudect_state_t dudect_main(dudect_ctx_t *c, char* fileName);
+ DUDECT_VISIBILITY int dudect_free(dudect_ctx_t *ctx);
+ DUDECT_VISIBILITY void randombytes(uint8_t *x, size_t how_much);
+ DUDECT_VISIBILITY uint8_t randombit(void);
+@@ -154,6 +160,13 @@ extern uint8_t do_one_computation(uint8_t *data);
+ #include <stdlib.h>
+ #include <unistd.h>
+ 
++
++int runningCounter = 0;
++int lastExitCode = 0;
++int availableMeasurements = 0;
++csv_entry csvEntries[4200000];
++bool readEntries = false;
++
+ /*
+   Online Welch's t-test
+  
+@@ -182,6 +195,7 @@ static double t_compute(ttest_ctx_t *ctx) {
+   double num = (ctx->mean[0] - ctx->mean[1]);
+   double den = sqrt(var[0] / ctx->n[0] + var[1] / ctx->n[1]);
+   double t_value = num / den;
++  //printf("Var[0] is: %lf, Var[1] is: %lf, num is: %lf, den is: %lf, t_value is %lf, n[0] is: %lf, n[1] is: %lf, m2[0] is: %lf, m2[1] is: %lf\n", var[0], var[1], num, den, t_value, ctx->n[0], ctx->n[1], ctx->m2[0], ctx->m2[1]);
+   return t_value;
+ }
+ 
+@@ -211,6 +225,7 @@ static int64_t percentile(int64_t *a, double which, size_t size) {
+ */
+ static void prepare_percentiles(dudect_ctx_t *ctx) {
+   for (size_t i = 0; i < DUDECT_NUMBER_PERCENTILES; i++) {
++    printf("Threshold #%d set to fastest %lf\n ", i, 1 - (pow(0.5, 10 * (double)(i + 1) / DUDECT_NUMBER_PERCENTILES)));
+     ctx->percentiles[i] = percentile(
+         ctx->exec_times, 1 - (pow(0.5, 10 * (double)(i + 1) / DUDECT_NUMBER_PERCENTILES)),
+         ctx->config->number_measurements);
+@@ -274,17 +289,80 @@ static int64_t cpucycles(void) {
+ #define t_threshold_moderate                                                   \
+   10 // test failed. Pankaj likes 4.5 but let's be more lenient
+ 
+-static void measure(dudect_ctx_t *ctx) {
+-  for (size_t i = 0; i < ctx->config->number_measurements; i++) {
+-    ctx->ticks[i] = cpucycles();
+-    do_one_computation(ctx->input_data + i * ctx->config->chunk_size);
+-  }
+ 
+-  for (size_t i = 0; i < ctx->config->number_measurements-1; i++) {
+-    ctx->exec_times[i] = ctx->ticks[i+1] - ctx->ticks[i];
++//[R-Comparison]
++static int readPreparedCsv(char* fileName) {
++    FILE *csvFile = fopen(fileName, "r");
++    if (csvFile == NULL) {
++        printf("Failed to open file.\n");
++        exit(1);
++    }
++    else {
++        char ch;
++        int lineCount = 0;
++        do
++        {
++        	ch = fgetc(csvFile);
++        	if (ch == '\n')  {
++        		lineCount++;
++        	}
++        } while (ch != EOF);
++        rewind(csvFile);
++        int i;
++        bool useMonaParsing = false;
++        for (i = 0; i < lineCount; i++) {
++            if(i == 0) {
++            	//drop first line
++            	char firstLine[1000];
++            	fscanf(csvFile, "%s", &firstLine);
++            	if(strcmp(firstLine, "V1,V2") != 0) {
++            		useMonaParsing = true;
++            		//header line is missing, parse as Mona-type
++            		fscanf(firstLine, "%[^;];%lld\n", &csvEntries[i].identifier, &csvEntries[i].measurement);
++            		printf("Parsing with Mona format\n");
++            	} else {
++            		printf("Parsing with R format\n");
++            	}
++            } else {
++            	if(useMonaParsing) {
++            		fscanf(csvFile, "%[^;];%lld\n", &csvEntries[i].identifier, &csvEntries[i].measurement);
++            	} else {
++            		fscanf(csvFile, "%[^,], %lld\n", &csvEntries[i].identifier, &csvEntries[i].measurement);
++            	}
++            	
++            }
++            
++            //printf("%d of %d : %s %lld\n", i, lineCount,csvEntries[i].identifier, csvEntries[i].measurement);
++        }
++        return i;
++    }
++}
++
++static void measure(dudect_ctx_t *ctx, char* fileName) {
++  if(!readEntries) {
++    availableMeasurements = readPreparedCsv(fileName);
++    printf("%d lines found\n", availableMeasurements);
++    readEntries = true;
++  }
++  for (size_t i = 0; i < ctx->config->number_measurements; i++) {
++    // [R-Comparison] 
++    // 1. only read from provided file
++    // 2. set class accordingly
++    csv_entry listedEntry = csvEntries[runningCounter];
++    ctx->exec_times[i] = listedEntry.measurement;
++    ctx->classes[i] = listedEntry.identifier[0] == 'B' ? 0 : 1;
++    //printf("Class is %c with val %lld and index %d\n", listedEntry.identifier[0], listedEntry.measurement, runningCounter);
++    runningCounter++;
++    if(runningCounter >= availableMeasurements) {
++    		printf("No more measurements available - quitting. \n");
++		exit(lastExitCode);
++    }
+   }
+ }
+ 
++
++
++
+ static void update_statistics(dudect_ctx_t *ctx) {
+   for (size_t i = 10 /* discard the first few measurements */; i < (ctx->config->number_measurements-1); i++) {
+     int64_t difference = ctx->exec_times[i];
+@@ -310,6 +388,10 @@ static void update_statistics(dudect_ctx_t *ctx) {
+       t_push(ctx->ttest_ctxs[1 + DUDECT_NUMBER_PERCENTILES], centered * centered, ctx->classes[i]);
+     }
+   }
++  
++  for(int j = 0; j < 102; j++) {
++  	//printf("Test context %d has %lf measurements for A and %lf for B\n", j, ctx->ttest_ctxs[j]->n[0], ctx->ttest_ctxs[j]->n[1]);
++  }
+ }
+ 
+ #if DUDECT_TRACE
+@@ -329,12 +411,14 @@ static ttest_ctx_t *max_test(dudect_ctx_t *ctx) {
+   for (size_t i = 0; i < DUDECT_TESTS; i++) {
+     if (ctx->ttest_ctxs[i]->n[0] > DUDECT_ENOUGH_MEASUREMENTS) {
+       double x = fabs(t_compute(ctx->ttest_ctxs[i]));
++      printf("t value of test %d is %lf\n", i, x);
+       if (max < x) {
+         max = x;
+         ret = i;
+       }
+     }
+   }
++  printf("max t value is based on test context index %d\n", ret);
+   return ctx->ttest_ctxs[ret];
+ }
+ 
+@@ -366,6 +450,7 @@ static dudect_state_t report(dudect_ctx_t *ctx) {
+   // sometimes you can see this number go down - this can be confusing 
+   // but can happen (different test)
+   printf("meas: %7.2lf M, ", (number_traces_max_t / 1e6));
++  printf("MEASUREMENTS: %0.f COUNTER: %d", number_traces_max_t, runningCounter);
+   if (number_traces_max_t < DUDECT_ENOUGH_MEASUREMENTS) {
+     printf("not enough measurements (%.0f still to go).\n", DUDECT_ENOUGH_MEASUREMENTS-number_traces_max_t);
+     return DUDECT_NO_LEAKAGE_EVIDENCE_YET;
+@@ -393,31 +478,38 @@ static dudect_state_t report(dudect_ctx_t *ctx) {
+     (double)(5*5)/(double)(max_tau*max_tau));
+ 
+   if (max_t > t_threshold_bananas) {
++    lastExitCode = 11;
+     printf(" Definitely not constant time.\n");
+     return DUDECT_LEAKAGE_FOUND;
+   }
+   if (max_t > t_threshold_moderate) {
++    lastExitCode = 11;
+     printf(" Probably not constant time.\n");
+     return DUDECT_LEAKAGE_FOUND;
+   }
+   if (max_t < t_threshold_moderate) {
++    lastExitCode = 10;
+     printf(" For the moment, maybe constant time.\n");
+   }
+   return DUDECT_NO_LEAKAGE_EVIDENCE_YET;
+ }
+ 
+-dudect_state_t dudect_main(dudect_ctx_t *ctx) {
+-  prepare_inputs(ctx->config, ctx->input_data, ctx->classes);
+-  measure(ctx);
++dudect_state_t dudect_main(dudect_ctx_t *ctx, char* fileName) {
++  // [R-Comparison] we do not prepare as it's pointless in our use case
++  // Instead, we set the classes in measure()
++  //prepare_inputs(ctx->config, ctx->input_data, ctx->classes);
++  measure(ctx, fileName);
+ 
+   bool first_time = ctx->percentiles[DUDECT_NUMBER_PERCENTILES - 1] == 0;
+ 
+   dudect_state_t ret = DUDECT_NO_LEAKAGE_EVIDENCE_YET;
+   if (first_time) {
++	  printf("First batch\n");
+     // throw away the first batch of measurements.
+     // this helps warming things up.
+     prepare_percentiles(ctx);
+   } else {
++	  printf("Not First batch\n");
+     update_statistics(ctx);
+     ret = report(ctx);
+   }
+diff --git a/test.py b/test.py
+deleted file mode 100644
+index 61ff311..0000000
+--- a/test.py
++++ /dev/null
+@@ -1,32 +0,0 @@
+-import os
+-import sys
+-
+-_TIMEOUT=60
+-
+-_EXPECTED_TO_LEAK = [
+-    "dudect_aes32_-O2",
+-    "dudect_donnabad_-O2",
+-    "dudect_simple_O0",
+-    ]
+-
+-_EXPECTED_NOT_TO_LEAK = [
+-    "dudect_donna_-O2",
+-    "dudect_aesbitsliced_-O2",
+-    "dudect_simple_O2",
+-    ]
+-
+-def check(name, expected_to_leak):
+-    cmd = "timeout %d ./%s" % (_TIMEOUT, name)
+-    ret = os.system(cmd) >> 8   # os.system returns the exit code in the top bits
+-    actual_leaks = (ret != 124) # if command timeouts, ret will be 124
+-    if actual_leaks != expected_to_leak:
+-        print("FAIL %s expected? %s actual: %s"%(name, expected_to_leak, actual_leaks))
+-        sys.exit(1)
+-
+-for name in _EXPECTED_TO_LEAK:
+-    check(name, expected_to_leak=True)
+-
+-for name in _EXPECTED_NOT_TO_LEAK:
+-    check(name, expected_to_leak=False)
+-
+-print("PASS")

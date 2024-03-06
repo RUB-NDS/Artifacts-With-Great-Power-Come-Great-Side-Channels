@@ -1,0 +1,80 @@
+diff --git a/src/de/fau/pi1/timerReporter/evaluation/StatisticEvaluation.java b/src/de/fau/pi1/timerReporter/evaluation/StatisticEvaluation.java
+index fef46c7..472b468 100644
+--- a/src/de/fau/pi1/timerReporter/evaluation/StatisticEvaluation.java
++++ b/src/de/fau/pi1/timerReporter/evaluation/StatisticEvaluation.java
+@@ -86,16 +86,20 @@ public class StatisticEvaluation {
+ 	 * 
+ 	 */
+ 	public void calibrationPhase() {
++		boolean foundBox = false;
+ 		// iterate over all secret combination
+ 		for (Secret secretA : this.dataSet.getSecrets()) {
+ 			for (Secret secretB : this.dataSet.getSecrets()) {
+ 				if(secretA != secretB) {
+ 					if(this.optimalBox[0] == 0.0 && this.optimalBox[1] == 0.0) {
+ 						if(searchOptimalBox(secretA, secretB)) {
+-							int smallestSize = searchSmallestSize(secretA, secretB);
+-							this.openValidationPhase(secretA, secretB, smallestSize, this.optimalBox);
++							// MODIFIED
++							//	int smallestSize = searchSmallestSize(secretA, secretB);
++							//	this.openValidationPhase(secretA, secretB, smallestSize, this.optimalBox);
++						}
++						if(this.optimalBox[0] != 0.0 || this.optimalBox[1] != 0.0) {
++							foundBox = true;
+ 						}
+-
+ 						this.optimalBox =  new double[2];
+ 						this.optimalBox[0] = 0.0;
+ 						this.optimalBox[1] = 0.0;
+@@ -108,13 +112,20 @@ public class StatisticEvaluation {
+ 							this.openValidationPhase(secretA, secretB, smallestSize, this.optimalBox);
+ 						} else {
+ 							logger.warning(secretA.getName() + " < " + secretB.getName() + ": no significant different result found! You need to measure more times.");
+-
+ 						}
+ 					}
+ 				}
+ 
+ 			}
+ 		}
++		// MODIFIED
++		if(foundBox) {
++			System.out.println("foundBox");
++			System.exit(11);
++		} else {
++			System.out.println("noBox");
++			System.exit(10);
++		}
+ 	}
+ 
+ 	/**
+diff --git a/src/de/fau/pi1/timerReporter/reader/ReaderCsv.java b/src/de/fau/pi1/timerReporter/reader/ReaderCsv.java
+index 76f4421..5849bbb 100644
+--- a/src/de/fau/pi1/timerReporter/reader/ReaderCsv.java
++++ b/src/de/fau/pi1/timerReporter/reader/ReaderCsv.java
+@@ -51,6 +51,10 @@ public class ReaderCsv extends Reader{
+ 			HashMap<String, Secret> secretMap = new HashMap<String, Secret>();
+ 
+ 			while ((line = data.readLine()) != null) {
++				if(lineCounter == 0) {
++					++lineCounter;
++					continue;
++				}
+ 				splitArray = line.split(";");
+ 				if(splitArray.length == 1) {
+ 					// If there are no ';'-separated values, try ','-separated
+@@ -63,11 +67,13 @@ public class ReaderCsv extends Reader{
+ 				}
+ 
+ 				try{
++					
+ 					if(splitArray.length == 3) {
+ 						newTime = Long.parseLong(splitArray[2]);
+ 						secretName = splitArray[1];
+ 					} else if(splitArray.length == 2) {
+-						newTime = Long.parseLong(splitArray[1]);
++					
++						newTime = Long.parseLong(splitArray[1].replace(" ", ""));
+ 						secretName = splitArray[0];
+ 					} else {
+ 						throw new RuntimeException("Wrong input file format. Should be: (<id>;)?<secret>;<time>");

@@ -1,0 +1,28 @@
+FROM alpine:3.19.1
+
+# Install required dependencies
+RUN apk add git openjdk11 apache-ant make gcc g++ musl-dev python3 py3-pip libcurl cmake libxml2 openssl build-base gnuplot texlive R  R-dev R-doc linux-headers libxml2-dev fontconfig-dev harfbuzz-dev fribidi-dev freetype-dev libpng-dev tiff-dev libjpeg
+RUN R -e "options(repos = c(CRAN = 'http://cran.rstudio.com/')); install.packages(c('tidyverse'), dependencies=TRUE);"
+
+# Copy required files
+ADD ./analyzer /analyzer
+
+# Setup mona
+WORKDIR /analyzer
+RUN git clone https://github.com/seecurity/mona-timing-report.git
+WORKDIR /analyzer/mona-timing-report
+RUN git checkout 4c74fb7e629b4d057b2d5d4accdb120d920774b7 \
+    && git apply /analyzer/patches/mona.patch \
+    && ant
+
+# Setup dudect
+WORKDIR /analyzer
+RUN git clone https://github.com/oreparaz/dudect.git
+WORKDIR /analyzer/dudect
+RUN git checkout 66190a8e4e878352b566a20ccb8cef69bb06a915 \
+    && git apply /analyzer/patches/dudect-artificial.patch \
+    && make
+    
+# Setup analyzer
+WORKDIR /analyzer/scripts
+ENTRYPOINT ["python3", "analyzeArtificialMeasurements.py"]

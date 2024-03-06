@@ -1,0 +1,9 @@
+FROM alpine:3.19.1
+
+# Install required dependencies
+RUN apk add python3
+
+# Setup reporter
+ADD ./reporter /reporter
+WORKDIR /reporter
+ENTRYPOINT ["python3", "collectResults.py"]
