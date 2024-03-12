@@ -2,7 +2,7 @@ FROM alpine:3.19.1
 
 # Install required dependencies
 RUN apk add git openjdk11 apache-ant make gcc g++ musl-dev python3 py3-pip libcurl cmake libxml2 openssl build-base gnuplot texlive R  R-dev R-doc linux-headers libxml2-dev fontconfig-dev harfbuzz-dev fribidi-dev freetype-dev libpng-dev tiff-dev libjpeg
-RUN R -e "options(repos = c(CRAN = 'http://cran.rstudio.com/')); install.packages(c('tidyverse'), dependencies=TRUE, Ncpus = 6);"
+RUN R -e "options(repos = c(CRAN = 'http://cran.rstudio.com/')); install.packages('tidyverse', dependencies=TRUE, Ncpus = 6);"
 
 # Copy required files
 ADD ./analyzer /analyzer
