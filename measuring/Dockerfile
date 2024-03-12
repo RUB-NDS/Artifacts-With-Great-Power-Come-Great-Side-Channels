@@ -26,8 +26,9 @@ RUN sed -i 's/--no-cache//g' ./images/baseimage/build-base-image.sh
 
 # Clone and build measurement tool
 WORKDIR /
-RUN git clone --depth 1 --branch v1.0.1 https://github.com/tls-attacker/TLS-Docker-Timer.git
+RUN git clone https://github.com/tls-attacker/TLS-Docker-Timer.git
 WORKDIR /TLS-Docker-Timer
+RUN git checkout eb6e32ff09
 RUN mvn clean package
 
 COPY entrypoint.sh /entrypoint/
