@@ -2,31 +2,31 @@ import csv
 import os
 import sys
 
-def isBasline(zeile):
-    return zeile[0].strip() == "BASELINE"
+def isBasline(line):
+    return line[0].strip() == "BASELINE"
 
-def isModified(zeile):
-    return zeile[0].strip() == "MODIFIED"
+def isModified(line):
+    return line[0].strip() == "MODIFIED"
 
 """Get all BASELINE vectors from a file."""
-def getBaselineAsList(eingabe_datei):
-    baseline_zeilen = []
-    with open(eingabe_datei, "r", newline="") as csv_datei:
-        csv_reader = csv.reader(csv_datei)
-        for zeile in csv_reader:
-            if isBasline(zeile):
-                baseline_zeilen.append(zeile[1])
-    return baseline_zeilen
+def getBaselineAsList(input_file):
+    lines_baseline = []
+    with open(input_file, "r", newline="") as csv_file:
+        csv_reader = csv.reader(csv_file)
+        for line_read in csv_reader:
+            if isBasline(line_read):
+                lines_baseline.append(line_read[1])
+    return lines_baseline
 
 """"Get all MODIFIED vectors from a file."""
 def getModifiedAsList(eingabe_datei):
-    modified_zeilen = []
-    with open(eingabe_datei, "r", newline="") as csv_datei:
-        csv_reader = csv.reader(csv_datei)
-        for zeile in csv_reader:
-            if isModified(zeile):
-                modified_zeilen.append(zeile[1])
-    return modified_zeilen
+    lines_modified = []
+    with open(eingabe_datei, "r", newline="") as csv_file:
+        csv_reader = csv.reader(csv_file)
+        for line_read in csv_reader:
+            if isModified(line_read):
+                lines_modified.append(line_read[1])
+    return lines_modified
 
 """Merge the measurements for specific folder."""
 def merge_for_folder(folder_path):
@@ -36,8 +36,8 @@ def merge_for_folder(folder_path):
     modified2 = getModifiedAsList(folder_path + "/" + "InvPadValMac-[0]-0-59vsPlain_XF_(0xXF=#padding_bytes).csv")
     modified3 = getModifiedAsList(folder_path + "/" + "InvPadValMac-[0]-0-59vsValPadInvMac-[0]-0-59.csv")
 
-    ausgabe_datei = "timing.csv"
-    with open(folder_path + "/" + ausgabe_datei, "w", newline="") as csv_datei:
+    result_file = "timing.csv"
+    with open(folder_path + "/" + result_file, "w", newline="") as csv_datei:
         csv_writer = csv.writer(csv_datei)
         csv_writer.writerow(["InvPadValMac-[0]-0-59", "Plain_FF", "Plain_XF_(0xXF=#padding_bytes)", "ValPadInvMac-[0]-0-59.csv"])
     
@@ -52,7 +52,7 @@ def merge_for_folder(folder_path):
 def find_padding_oracle_folders(root_path):
     ctr = 0
     for root, _, _ in os.walk(root_path):
-        if os.path.basename(root) == "PaddingOracle":
+        if "PaddingOracle" in os.path.basename(root):
             merge_for_folder(root)
             ctr = ctr + 1
             print(f"Done preparing {ctr} files.")
