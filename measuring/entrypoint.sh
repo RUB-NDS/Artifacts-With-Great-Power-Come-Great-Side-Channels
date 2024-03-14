@@ -37,7 +37,7 @@ else
         echo "[+] Successfully prepared TLS-Docker-Library"
     else
         echo "[-] Failed to prepare TLS-Docker-Library."
-        return 1
+        exit 1
     fi
 fi
 
@@ -54,7 +54,7 @@ else
         sh setup.sh | sed 's/^/[TLS-Docker-Library Setup]: /'
         if [ ! -f "certs/out/ca.pem" ]; then
             echo "[-] Failed to prepare TLS-Docker-Library"
-            return 1
+            exit 1
         fi
         echo "[+] Successfully prepared TLS-Docker-Library"
     fi
@@ -66,7 +66,7 @@ else
         docker image rm $IMAGE_NAME-client:$IMAGE_TAG &> /dev/null
     else
         echo "[-] Failed to build '$IMAGE_NAME:$IMAGE_TAG' using TLS-Docker-Library"
-        return 1
+        exit 1
     fi
 fi
 
@@ -79,7 +79,7 @@ if [ $? -eq 0 ]; then
     echo "[+] Replaced certificates in docker volume"
 else
     echo "[-] Failed to replace certificates in docker volume"
-    return 1
+    exit 1
 fi
 docker rm cert-data-helper-container &> /dev/null
 echo "Starting Timing-Proxy in background."
