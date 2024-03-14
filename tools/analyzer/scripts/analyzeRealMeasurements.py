@@ -68,10 +68,12 @@ def write_res(new_filepath, exit_code):
 
 """Process one file."""
 def process_file(file_path, tool_index):
-    exit_code = call_tool(file_path, tool_index)
     result_file_path = f"{file_path}.result-{tool_mapping.get(tool_index)}"
-    write_res(result_file_path, exit_code)
-    return exit_code
+    if os.path.exists(result_file_path):
+        print(f"Found result for {file_path} - skipping evaluation")
+    else:  
+        exit_code = call_tool(file_path, tool_index)
+        write_res(result_file_path, exit_code)
 
 """Process files in parallel."""
 def process_files(file_paths, tool_index, num_threads):
