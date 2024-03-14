@@ -45,6 +45,9 @@ attack_vector_paper_mapping = {
     
     # Lucky Thirteen (L13) Vectors
     "NO_PADDINGvsLONG_PADDING": "L1L2",
+
+    # tlsfuzzer merged
+    "timing.csv": "(merged)"
 }
 
 
@@ -117,8 +120,17 @@ def print_directory_batch_result(options, directory, suffix_no_diff, suffix_diff
         if options == "-d":
             mapped_files_no_diff = [map_result_files(entry) for entry in suffix_no_diff[key]]
             mapped_files_diff = [map_result_files(entry) for entry in suffix_diff[key]]
-            line_no_diff.append(f"{color_mapping.get('green')}{','.join(mapped_files_no_diff)}{color_mapping.get('default')}")
-            line_diff.append(f"{color_mapping.get('red')}{','.join(mapped_files_diff)}{color_mapping.get('default')}")
+            if len(suffix_no_diff[key]) == 0:
+                line_diff.append(f"{color_mapping.get('red')}(all){color_mapping.get('default')}")
+                line_no_diff.append('')
+            elif len(suffix_diff[key]) == 0:
+                line_no_diff.append(f"{color_mapping.get('green')}(all){color_mapping.get('default')}")
+                line_diff.append('')
+            else:
+                line_no_diff.append(f"{color_mapping.get('green')}{','.join(mapped_files_no_diff)}{color_mapping.get('default')}")
+                line_diff.append(f"{color_mapping.get('red')}{','.join(mapped_files_diff)}{color_mapping.get('default')}")
+            
+
         else:
             line_no_diff.append(f"{color_mapping.get('green')}{len(suffix_no_diff[key])}{color_mapping.get('default')}")
             line_diff.append(f"{color_mapping.get('red')}{len(suffix_diff[key])}{color_mapping.get('default')}")
@@ -160,7 +172,6 @@ def main(directory_path, tool_index, options):
         for root, dirs, files in os.walk(directory_path):
             if any(file.endswith(".result-" + tool_mapping.get(tool_index)) for file in files):
                 matching_directories.append(root)
-        # Process all colledted directories
         process_all_directories(matching_directories, tool_index, options)
 
 if __name__ == "__main__":
@@ -175,7 +186,7 @@ if __name__ == "__main__":
 
     print("Selected directory : " + sys.argv[1])
     if(sys.argv[2] == "all"):
-        print("Selected suffix    : all")
+        print("Selected suffix    : (all)")
     else:
         print("Selected suffix    : " + tool_mapping.get(sys.argv[2]))
     print("Selected options   : " + sys.argv[3])
