@@ -51,7 +51,7 @@ def merge_for_folder(folder_path):
 """Find all Padding Oracle folders and merge the measurements inside them."""
 def find_padding_oracle_folders(root_path):
     ctr = 0
-    for root, _, _ in os.walk(root_path):
+    for root, _, _ in os.walk(root_path.rstrip("/")):
         if "PaddingOracle" in os.path.basename(root):
             merge_for_folder(root)
             ctr = ctr + 1

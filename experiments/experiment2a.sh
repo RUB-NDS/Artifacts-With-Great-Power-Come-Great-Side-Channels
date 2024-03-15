@@ -1,0 +1,1 @@
+docker run -v $(pwd)/datasets/analysis_results:/analysis_results --rm timing-reporter /analysis_results/qualitative_analysis/newest-versions-500k/MATRIXSSL-4.6.0/Bleichenbacher/ all -d

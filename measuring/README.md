@@ -36,4 +36,4 @@ docker run -ti -v /var/run/docker.sock:/var/run/docker.sock -v $(pwd):/output tl
 ```
 Note that it is always recommended to add `-proxy` to the CLI flags as otherwise the timing measurements will be collected by the java application instead of utilizing the more precise (and more resistant to bias) C++ proxy.
 
-For further documentation on the CLI flags of the TLS-Docker-Timer, see [TODO URL]
+For further documentation on the CLI flags of the TLS-Docker-Timer, see [here](https://github.com/tls-attacker/TLS-Docker-Timer).

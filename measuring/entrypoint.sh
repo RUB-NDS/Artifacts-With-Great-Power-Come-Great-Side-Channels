@@ -4,7 +4,7 @@ if [ $# -eq 0 ]; then
     # no args provided - use defaults
     IMAGE_NAME="nss"
     IMAGE_TAG="3.87"
-    CLI_FLAGS="-i 100000 -n 100000 -l $IMAGE_NAME -v $IMAGE_TAG -proxy -subtask bleichenbacher"
+    CLI_FLAGS="-i 100000 -n 100000 -l $IMAGE_NAME -v $IMAGE_TAG -proxy -subtask bleichenbacher -o own_measurements/"
 else
     # parse from args
     while getopts ":l:v:" opt; do
@@ -21,7 +21,8 @@ else
         ;;
     esac
     done
-    CLI_FLAGS="$@"
+    # always enforce the proxy and set the output directory
+    CLI_FLAGS="$@ -proxy -o own_measurements/"
 fi
 VOLUME_NAME="cert-data"
 

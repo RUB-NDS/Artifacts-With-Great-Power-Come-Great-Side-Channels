@@ -52,7 +52,7 @@ def merge_for_folder(folder_path):
 """Find all Bleichenbacher folders and merge the measurements inside them."""
 def find_bleichenbacher_folders(root_path):
     ctr = 0
-    for root, _, _ in os.walk(root_path):
+    for root, _, _ in os.walk(root_path.rstrip("/")):
         if "Bleichenbacher" in os.path.basename(root):
             merge_for_folder(root)
             ctr = ctr + 1
