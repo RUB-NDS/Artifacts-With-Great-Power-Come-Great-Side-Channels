@@ -3,7 +3,7 @@
 Artifact for the USENIX Security '24 publication. The full paper can be found [here](https://www.usenix.org/conference/usenixsecurity24/presentation/dunsche). The datasets collected for our study can be found [here](https://zenodo.org/records/10817685) (DOI 10.5281/zenodo.10817684)
 
 ## Scope
-This repository contains Dockerfiles and shell scripts that aim to support the user in reproducing and confirming the results of our study. For this purpose, the shell scripts show how to run the statistical tools considered in our study and how to collect own measurements.
+This repository contains Dockerfiles and shell scripts that aim to support the user in reproducing and confirming the results of our study. For this purpose, the shell scripts show how to run the statistical tools considered in our study and how to collect own measurements for TLS Libraries.  
 
 ## Structure
 The main directory contains the *setup.sh* script intended to prepare the environment for the experiments described in the artifact appendix of our paper (see below).
@@ -41,3 +41,16 @@ The last step should start the measuring tool, prepare the TLS-Docker-Library, b
 Our experiments 1b, 2b, and 3 require computational effort, as they involve the analysis and collection of timing measurements. To run all three experiments beforehand, use ```./experiments/run_lengthy_experiments.sh```. This is script is expected to take around nine hours. When later going over the individual experiments, the computational steps will be skipped.
 
 For details on the experiments, please see the artifact appendix and the readme file [here](https://github.com/RUB-NDS/Artifacts-With-Great-Power-Come-Great-Side-Channels/tree/main/experiments).
+
+
+## Replicating Measurements of Artificial Side Channels
+We believe that collecting own measurements of the artificial side channels provides little value over the measurements we collected and provide for proving our claims and hence excluded this step from the experiments. For completeness, we provide the source files as part of our datasets. Each aritificial side channel consists of a client and server application written in C which can be built using gcc. E.g:
+```
+gcc client_same-mean.c -o client_same-mean.o
+gcc server_same-mean.c -o server_same-mean.o
+```
+builds the binaries for the *same-mean* side channel. The binaries can be run using 
+```
+./server_same-mean.o & ./client_same-mean.o
+```
+The server binds to 127.0.0.1:8080, to which the client connects. By default, the client collects 500,000 measurements for each of the two modeled distributions (see our paper for details) and prints the measurements to console.
