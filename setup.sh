@@ -43,9 +43,10 @@ unzip -q -j -n d_measurements_qualitative.zip 'measurements_qualitative/MATRIXSS
 
 # run the TLS-Docker-Time container once to build the default image (NSS v 3.87)
 echo "[9/9] -  Preparing TLS-Docker-Timer container"
-docker run -ti -v /var/run/docker.sock:/var/run/docker.sock -v $(pwd):/output tls-docker-timer -l nss -v 3.87 -dry
-grep "Found 1 applicable server images" timing-evaluator.log > /dev/null 2>&1;
+docker run -ti -v /var/run/docker.sock:/var/run/docker.sock -v $(pwd):/output tls-docker-timer -l nss -v 3.87 -n 1 -i 1 -subtask Bleichenbacher
+grep "Subtask Bleichenbacher completed 5 measurements" timing-evaluator.log > /dev/null 2>&1;
 if [ $? -ne 1 ]; then
+    sleep 1
     rm -f timing-evaluator.log
     echo "Preparation finished."
 else
