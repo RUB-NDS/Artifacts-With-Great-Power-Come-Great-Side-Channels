@@ -1,10 +1,9 @@
 #!/bin/ash
-
 if [ $# -eq 0 ]; then
     # no args provided - use defaults
     IMAGE_NAME="nss"
     IMAGE_TAG="3.87"
-    CLI_FLAGS="-i 100000 -n 100000 -l $IMAGE_NAME -v $IMAGE_TAG -proxy -subtask bleichenbacher -o own_measurements/"
+    CLI_FLAGS="-i 100000 -n 100000 -l $IMAGE_NAME -v $IMAGE_TAG -subtask bleichenbacher -o own_measurements/"
 else
     # parse from args
     while getopts ":l:v:" opt; do
@@ -22,14 +21,14 @@ else
     esac
     done
     # always enforce the proxy and set the output directory
-    CLI_FLAGS="$@ -proxy -o own_measurements/"
+    CLI_FLAGS="$@ -o own_measurements/"
 fi
 VOLUME_NAME="cert-data"
 
 
 # Check if the TLS-Docker-Library cert volume exists otherwise, call setup.sh
 if docker volume inspect "$VOLUME_NAME" &> /dev/null; then
-    echo "[+] Found TLS-Docker-Library certificate volume."
+    echo "[+] Found TLS-Docker-Library certificate volume"
 else
     echo "[-] TLS-Docker-Library certificate volume is missing. Will attempt to prepare docker library."
     cd /TLS-Docker-Library/
@@ -37,7 +36,7 @@ else
     if docker volume inspect "$VOLUME_NAME" &> /dev/null; then
         echo "[+] Successfully prepared TLS-Docker-Library"
     else
-        echo "[-] Failed to prepare TLS-Docker-Library."
+        echo "[-] Failed to prepare TLS-Docker-Library"
         exit 1
     fi
 fi
@@ -83,8 +82,19 @@ else
     exit 1
 fi
 docker rm cert-data-helper-container &> /dev/null
-echo "Starting Timing-Proxy in background."
-./loopProxy.sh > /dev/null 2>&1 &
+
+# Test if proxy starts successfully
+timeout 2s /Timing-Proxy/build/src/networkTimingTool -t CPU -i eth0 -d 5555 -c 4444 > /dev/null 2>&1 
+EXIT_CODE=$?
+if [ $EXIT_CODE -ne 143 ]; then
+    echo "[-] Proxy failed to start (exit code $EXIT_CODE) - will collect measurements in TLS-Docker-Timer (NOT RECOMMENDED)"
+else
+    echo "[+] Proxy seems functional with CPU timestamp option"
+    CLI_FLAGS="$CLI_FLAGS -proxy"
+    echo "Starting Timing-Proxy in background."
+    ./loopProxy.sh > /dev/null 2>&1 &
+fi
+
 echo "Starting TLS-Docker-Timer."
 cd /output
 java -jar /TLS-Docker-Timer/apps/TLS-Docker-Timer.jar $CLI_FLAGS
