@@ -7,9 +7,9 @@ SUBTASK="Bleichenbacher" # Bleichenbacher/PaddingOracle/Lucky13
 DIRECTORY=$(pwd)
 
 if [ ! -d "./own_measurements/$LIBRARY_OUT-$LIBRARY_VERSION" ]; then
-    docker run -ti -v /var/run/docker.sock:/var/run/docker.sock -v $DIRECTORY:/output tls-docker-timer -i $MEASUREMENTS_PER_VECTOR -n $MEASUREMENTS_PER_VECTOR -l $LIBRARY -v $LIBRARY_VERSION -subtask $SUBTASK
+    docker run -ti -v /var/run/docker.sock:/var/run/docker.sock -v $DIRECTORY:/output tls-docker-timer -l $LIBRARY -v $LIBRARY_VERSION -i $MEASUREMENTS_PER_VECTOR -n $MEASUREMENTS_PER_VECTOR -subtask $SUBTASK
 else
-    echo "own_measurements directory already exists - skipping measuring with TLS-Docker-Timer container"
+    echo "Measurements directory already exists - skipping measuring with TLS-Docker-Timer container"
 fi
 
 echo "Analyzing own $LIBRARY_OUT $LIBRARY_VERSION measurements with dudect"
