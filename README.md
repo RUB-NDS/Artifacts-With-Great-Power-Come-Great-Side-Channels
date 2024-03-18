@@ -3,9 +3,9 @@
 Artifact for the USENIX Security '24 publication. The full paper can be found [here](https://www.usenix.org/conference/usenixsecurity24/presentation/dunsche). The datasets collected for our study can be found [here](https://zenodo.org/records/10817685) (DOI 10.5281/zenodo.10817684)
 
 ## Scope
-This repository contains Dockerfiles and shell scripts that aim to support the user in confirming the results of our study. For this purpose, the shell scripts show how to run the statistical tools considered in our study and how to collect own measurements.
+This repository contains Dockerfiles and shell scripts that aim to support the user in reproducing and confirming the results of our study. For this purpose, the shell scripts show how to run the statistical tools considered in our study and how to collect own measurements.
 
-## Structure:
+## Structure
 The main directory contains the *setup.sh* script intended to prepare the environment for the experiments described in the artifact appendix of our paper (see below).
 
 Other directories:
