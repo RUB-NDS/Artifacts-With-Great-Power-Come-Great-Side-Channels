@@ -56,7 +56,7 @@ builds the binaries for the *same-mean* side channel. The binaries can be run us
 The server binds to 127.0.0.1:8080, to which the client connects. By default, the client collects 500,000 measurements for each of the two modeled distributions (see our paper for details) and prints the measurements to console.
 
 
-### Cite
+## Cite
 To cite our paper, you can use
 ```
 Martin Dunsche, Marcel Maehren, Nurullah Erinola, Robert Merget, Nicolai Bissantz, Juraj Somorovsky, and Jörg Schwenk. With Great Power Come Great Side Channels: Statistical Timing Side-Channel Analyses with Bounded Type-1 Errors. In 32nd USENIX Security Symposium, 2024.
