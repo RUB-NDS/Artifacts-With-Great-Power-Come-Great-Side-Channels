@@ -112,10 +112,10 @@ def resolve_exit_code(suffix):
 
 
 def print_directory_batch_result(options, directory, suffix_no_diff, suffix_diff):
-    print(f"{color_mapping.get('blue')}{directory}{color_mapping.get('default')}")
     headers = [tool_mapping.get(key) for key in suffix_diff.keys()]
     line_no_diff = ["No Diff:"]   
     line_diff = ["Diff:"]
+    max_total = 0
     for key in suffix_diff.keys():
         if options == "-d":
             mapped_files_no_diff = [map_result_files(entry) for entry in suffix_no_diff[key]]
@@ -132,15 +132,21 @@ def print_directory_batch_result(options, directory, suffix_no_diff, suffix_diff
             
 
         else:
-            line_no_diff.append(f"{color_mapping.get('green')}{len(suffix_no_diff[key])}{color_mapping.get('default')}")
-            line_diff.append(f"{color_mapping.get('red')}{len(suffix_diff[key])}{color_mapping.get('default')}")
+            files_total = len(suffix_no_diff[key]) + len(suffix_diff[key])
+            line_no_diff.append(f"{color_mapping.get('green')}{((len(suffix_no_diff[key]) / files_total) * 100):.1f}%{color_mapping.get('default')}")
+            line_diff.append(f"{color_mapping.get('red')}{((len(suffix_diff[key]) / files_total) * 100):.1f}%{color_mapping.get('default')}")
+            if files_total > max_total:
+                # use maximum to account for tlsfuzzer's merged files
+                max_total = files_total
     data = [line_no_diff, line_diff]
+    print(f"{color_mapping.get('blue')}{directory} ({max_total} datasets){color_mapping.get('default')}")
     print(tabulate(data, headers=headers, tablefmt="grid"))
 
 
 def print_directory_result(options, directory, files_no_diff, files_diff):
     print(f"{color_mapping.get('blue')}{directory}")
-    print(f"{color_mapping.get('green')}  No difference : {len(files_no_diff)}")
+    files_total = len(files_no_diff) + len(files_diff)
+    print(f"{color_mapping.get('green')}  No difference : {len(files_no_diff)} ({((len(files_no_diff) / files_total) * 100):.1f}%)")
     if options == "-d":
         for file in files_no_diff:
                 # attempt to map file name to vectors defined in paper for easier comparison
@@ -149,7 +155,7 @@ def print_directory_result(options, directory, files_no_diff, files_diff):
                 print(f"{color_mapping.get('green')}   {mapping} ({file})")
             else:
                 print(f"{color_mapping.get('green')}   {file}")
-    print(f"{color_mapping.get('red')}  Difference    : {len(files_diff)}")
+    print(f"{color_mapping.get('red')}  Difference    : {len(files_diff)} ({((len(files_diff) / files_total) * 100):.1f}%)")
     if options == "-d":
         for file in files_diff:
                 # attempt to map file name to vectors defined in paper for easier comparison
