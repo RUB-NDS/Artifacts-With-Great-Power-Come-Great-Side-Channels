@@ -54,3 +54,25 @@ builds the binaries for the *same-mean* side channel. The binaries can be run us
 ./server_same-mean.o & ./client_same-mean.o
 ```
 The server binds to 127.0.0.1:8080, to which the client connects. By default, the client collects 500,000 measurements for each of the two modeled distributions (see our paper for details) and prints the measurements to console.
+
+
+### Cite
+To cite our paper, you can use
+```
+Martin Dunsche, Marcel Maehren, Nurullah Erinola, Robert Merget, Nicolai Bissantz, Juraj Somorovsky, and Jörg Schwenk. With Great Power Come Great Side Channels: Statistical Timing Side-Channel Analyses with Bounded Type-1 Errors. In 32nd USENIX Security Symposium, 2024.
+```
+
+BibLaTeX:
+
+```
+@inproceedings {298152,
+    author = {Dunsche, Martin and Maehren, Marcel and Erinola, Nurullah and Merget, Robert and Bissantz, Nicolai and Somorovsky, Juraj and Schwenk, J\"{o}rg},
+	title = {With Great Power Come Great Side Channels: Statistical Timing {Side-Channel} Analyses with Bounded Type-1 Errors},
+	booktitle = {33rd USENIX Security Symposium (USENIX Security 24)},
+	year = {2024},
+	address = {Philadelphia, PA},
+	url = {https://www.usenix.org/conference/usenixsecurity24/presentation/dunsche},
+	publisher = {USENIX Association},
+	month = aug
+}
+```
